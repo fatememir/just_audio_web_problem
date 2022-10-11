@@ -38,7 +38,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           album: "Science Friday",
           title: "A Salute To Head-Scratching Science (30 seconds)",
           artwork:
-              "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
         ),
       ),
     AudioSource.uri(
@@ -48,7 +48,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         album: "Science Friday",
         title: "A Salute To Head-Scratching Science",
         artwork:
-            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+        "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
       ),
     ),
     AudioSource.uri(
@@ -57,7 +57,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         album: "Science Friday",
         title: "From Cat Rheology To Operatic Incompetence",
         artwork:
-            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+        "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
       ),
     ),
     AudioSource.uri(
@@ -66,7 +66,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         album: "Public Domain",
         title: "Nature Sounds",
         artwork:
-            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+        "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
       ),
     ),
   ]);
@@ -90,8 +90,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     // Listen to errors during playback.
     _player.playbackEventStream.listen((event) {},
         onError: (Object e, StackTrace stackTrace) {
-      print('A stream error occurred: $e');
-    });
+          print('A stream error occurred: $e');
+        });
     try {
       // Preloading audio is not currently supported on Linux.
       await _player.setAudioSource(_playlist,
@@ -147,7 +147,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           _player.positionStream,
           _player.bufferedPositionStream,
           _player.durationStream,
-          (position, bufferedPosition, duration) => PositionData(
+              (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
 
   @override
@@ -177,7 +177,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child:
-                                Center(child: Image.network(metadata.artwork)),
+                            Center(child: Image.network(metadata.artwork)),
                           ),
                         ),
                         Text(metadata.album,
@@ -197,7 +197,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     duration: positionData?.duration ?? Duration.zero,
                     position: positionData?.position ?? Duration.zero,
                     bufferedPosition:
-                        positionData?.bufferedPosition ?? Duration.zero,
+                    positionData?.bufferedPosition ?? Duration.zero,
                     onChangeEnd: (newPosition) {
                       _player.seek(newPosition);
                     },
@@ -226,8 +226,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                         icon: icons[index],
                         onPressed: () {
                           _player.setLoopMode(cycleModes[
-                              (cycleModes.indexOf(loopMode) + 1) %
-                                  cycleModes.length]);
+                          (cycleModes.indexOf(loopMode) + 1) %
+                              cycleModes.length]);
                         },
                       );
                     },
@@ -315,7 +315,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 album: "Public Domain",
                 title: "Nature Sounds ${++_addedCount}",
                 artwork:
-                    "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+                "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
               ),
             ));
           },

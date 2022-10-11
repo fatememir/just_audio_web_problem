@@ -1,12 +1,16 @@
-// This is a minimal example demonstrating a play/pause button and a seek bar.
-// More advanced examples demonstrating other features can be found in the same
-// directory as this example in the GitHub repository.
-
+// This example demonstrates how to play a playlist with a mix of URI and asset
+// audio sources, and the ability to add/remove/reorder playlist items.
+//
+// To run:
+//
+// flutter run -t lib/example_playlist.dart
+import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_example/common.dart';
+
 import 'package:rxdart/rxdart.dart';
 
 void main() => runApp(const MyApp());
@@ -19,12 +23,28 @@ class MyApp extends StatefulWidget {
 }
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  final _player = AudioPlayer();
+  late AudioPlayer _player;
+  final _playlist = ConcatenatingAudioSource(children: [
+    // Remove this audio source from the Windows and Linux version because it's not supported yet
+    if (kIsWeb ||
+        ![TargetPlatform.windows, TargetPlatform.linux]
+            .contains(defaultTargetPlatform))
+      ClippingAudioSource(
+        start: const Duration(seconds: 60),
+        end: const Duration(seconds: 90),
+        child: AudioSource.uri(Uri.parse(
+            "https://mohamad-voj.ir/files/Alireza%20jj%20-%20GhesmateMan.mp3")),
+        tag: "test",
+      ),
+  ]);
+  int _addedCount = 0;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     ambiguate(WidgetsBinding.instance)!.addObserver(this);
+    _player = AudioPlayer();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.black,
     ));
@@ -32,30 +52,29 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _init() async {
-    // Inform the operating system of our app's audio attributes etc.
-    // We pick a reasonable default for an app that plays speech.
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());
     // Listen to errors during playback.
     _player.playbackEventStream.listen((event) {},
         onError: (Object e, StackTrace stackTrace) {
-      print('A stream error occurred: $e');
-    });
-    // Try to load audio from a source and catch any errors.
+          print('A stream error occurred: $e');
+        });
     try {
-      // AAC example: https://dl.espressif.com/dl/audio/ff-16b-2c-44100hz.aac
-      await _player.setAudioSource(AudioSource.uri(Uri.parse(
-          "https://s3.amazonaws.com/scifri-episodes/scifri20181123-episode.mp3")));
+      // Preloading audio is not currently supported on Linux.
+      await _player.setAudioSource(_playlist,
+          preload: kIsWeb || defaultTargetPlatform != TargetPlatform.linux);
     } catch (e) {
+      // Catch load errors: 404, invalid url...
       print("Error loading audio source: $e");
     }
+
   }
+
+
 
   @override
   void dispose() {
     ambiguate(WidgetsBinding.instance)!.removeObserver(this);
-    // Release decoders and buffers back to the operating system making them
-    // available for other apps to use.
     _player.dispose();
     super.dispose();
   }
@@ -70,30 +89,27 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
-  /// Collects the data useful for displaying in a seek bar, using a handy
-  /// feature of rx_dart to combine the 3 streams of interest into one.
   Stream<PositionData> get _positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
           _player.positionStream,
           _player.bufferedPositionStream,
           _player.durationStream,
-          (position, bufferedPosition, duration) => PositionData(
+              (position, bufferedPosition, duration) => PositionData(
               position, bufferedPosition, duration ?? Duration.zero));
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: _scaffoldMessengerKey,
       home: Scaffold(
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Display play/pause button and volume/speed sliders.
+
               ControlButtons(_player),
-              // Display seek bar. Using StreamBuilder, this widget rebuilds
-              // each time the position, buffered position or duration changes.
               StreamBuilder<PositionData>(
                 stream: _positionDataStream,
                 builder: (context, snapshot) {
@@ -102,20 +118,24 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     duration: positionData?.duration ?? Duration.zero,
                     position: positionData?.position ?? Duration.zero,
                     bufferedPosition:
-                        positionData?.bufferedPosition ?? Duration.zero,
-                    onChangeEnd: _player.seek,
+                    positionData?.bufferedPosition ?? Duration.zero,
+                    onChangeEnd: (newPosition) {
+                      _player.seek(newPosition);
+                    },
                   );
                 },
               ),
+
+
             ],
           ),
         ),
+
       ),
     );
   }
 }
 
-/// Displays the play/pause button and volume/speed sliders.
 class ControlButtons extends StatelessWidget {
   final AudioPlayer player;
 
@@ -126,7 +146,6 @@ class ControlButtons extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Opens volume slider dialog
         IconButton(
           icon: const Icon(Icons.volume_up),
           onPressed: () {
@@ -142,11 +161,13 @@ class ControlButtons extends StatelessWidget {
             );
           },
         ),
-
-        /// This StreamBuilder rebuilds whenever the player state changes, which
-        /// includes the playing/paused state and also the
-        /// loading/buffering/ready state. Depending on the state we show the
-        /// appropriate button or loading indicator.
+        StreamBuilder<SequenceState?>(
+          stream: player.sequenceStateStream,
+          builder: (context, snapshot) => IconButton(
+            icon: const Icon(Icons.skip_previous),
+            onPressed: player.hasPrevious ? player.seekToPrevious : null,
+          ),
+        ),
         StreamBuilder<PlayerState>(
           stream: player.playerStateStream,
           builder: (context, snapshot) {
@@ -177,12 +198,19 @@ class ControlButtons extends StatelessWidget {
               return IconButton(
                 icon: const Icon(Icons.replay),
                 iconSize: 64.0,
-                onPressed: () => player.seek(Duration.zero),
+                onPressed: () => player.seek(Duration.zero,
+                    index: player.effectiveIndices!.first),
               );
             }
           },
         ),
-        // Opens speed slider dialog
+        StreamBuilder<SequenceState?>(
+          stream: player.sequenceStateStream,
+          builder: (context, snapshot) => IconButton(
+            icon: const Icon(Icons.skip_next),
+            onPressed: player.hasNext ? player.seekToNext : null,
+          ),
+        ),
         StreamBuilder<double>(
           stream: player.speedStream,
           builder: (context, snapshot) => IconButton(
@@ -206,3 +234,4 @@ class ControlButtons extends StatelessWidget {
     );
   }
 }
+
