@@ -33,7 +33,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         start: const Duration(seconds: 60),
         end: const Duration(seconds: 90),
         child: AudioSource.uri(Uri.parse(
-            "https://mohamad-voj.ir/files/Alireza%20jj%20-%20GhesmateMan.mp3")),
+            "https://aod.jaanapp.com/stream/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtb2RlbF92ZXJzaW9uIjoiMSIsInVzZXJfaWQiOiI2MDU3YzYzZThmYTBhYTMzNmU5ZTI5ODYiLCJ1c2VyX3R5cGUiOiJ2ZXJpZmllZCIsInNjb3BlcyI6W10sImV4cCI6MTc0MjA5Mzk1NX0.2EBAKTTQrqAf5Q5HFFfdaP-46JARtC2Sh3kqyl5dRtU/free/audio/6066d53bcf767b2324df6427/main/playlist.m3u8")),
         tag: "test",
       ),
   ]);
